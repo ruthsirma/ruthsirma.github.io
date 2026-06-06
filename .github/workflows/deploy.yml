@@ -1,20 +1,26 @@
-name: Deploy frontend to GitHub Pages
+# Role: Build the portfolio frontend and publish it to GitHub Pages.
+# Description:
+#   Builds the Vite frontend in frontend/ on every push to main and deploys
+#   the static output to GitHub Pages. Uses pnpm (lockfile: pnpm-lock.yaml).
+#   The Vite `base` path is auto-detected from the repo name at build time
+#   (see frontend/vite.config.js). A 404.html copy provides the SPA fallback
+#   so client-side routes survive a refresh / direct link.
+
+name: Deploy frontend to Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Allow the workflow to publish to Pages.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# One deploy at a time; don't cancel an in-progress production deploy.
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -23,20 +29,23 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 11
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Set up Node
+        uses: actions/setup-node@v5
         with:
-          node-version: 22
-          cache: pnpm
+          node-version: "24"
+          cache: "pnpm"
           cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -59,6 +68,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy to Pages
         id: deployment
         uses: actions/deploy-pages@v4
